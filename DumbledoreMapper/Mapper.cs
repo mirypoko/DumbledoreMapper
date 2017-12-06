@@ -1,7 +1,7 @@
 ﻿//https://github.com/mirypoko/DumbledoreMapper
 
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,36 +11,30 @@ namespace DumbledoreMapper
 {
     public static class Mapper
     {
-        private static readonly Dictionary<Type, Func<IList>> _listsConstructors = new Dictionary<Type, Func<IList>>();
+        private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertiesDictionaries
+            = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
 
-        private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _propertiesDictionaries
-            = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
-
-        private static readonly Dictionary<Type, Dictionary<Type, Func<object, object>>> _mappersDictionaries = new
-            Dictionary<Type, Dictionary<Type, Func<object, object>>>();
+        private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, Func<object, object>>> MappersDictionaries = new
+            ConcurrentDictionary<Type, ConcurrentDictionary<Type, Func<object, object>>>();
 
         /// <param name="source">The source whose items will be map to the new collection</param>
-        /// <returns>A new object of type T</returns>
-        public static T Map<T>(IEnumerable<object> source) where T : IEnumerable<object>
+        /// <returns>New collection of objects of type T</returns>
+        public static List<T> Map<T>(IEnumerable<object> source) where T : class
         {
-            var resultType = typeof(T);
-
-            var listConstructor = GetOrCreateListConstructor(resultType);
-
-            var resultList = listConstructor.Invoke();
-
-            var resultElemetnType = resultType.GetGenericArguments().Single();
+            var resultElemetnType = typeof(T);
 
             var sourceElemetnType = source.GetType().GetGenericArguments().Single();
 
             var itemsMapper = GetOrCreateMapper(sourceElemetnType, resultElemetnType);
 
+            var resultList = new List<T>();
+
             foreach (var item in source)
             {
-                resultList.Add(itemsMapper.Invoke(item));
+                resultList.Add((T)itemsMapper.Invoke(item));
             }
 
-            return (T)resultList;
+            return resultList;
         }
 
         ///// <summary>
@@ -60,21 +54,9 @@ namespace DumbledoreMapper
             return mapper.Invoke(source);
         }
 
-        private static Func<IList> GetOrCreateListConstructor(Type listType)
-        {
-
-            if (!_listsConstructors.TryGetValue(listType, out var listCounstructor))
-            {
-                listCounstructor = Expression.Lambda<Func<IList>>(Expression.New(listType)).Compile();
-                _listsConstructors.Add(listType, listCounstructor);
-            }
-
-            return listCounstructor;
-        }
-
         private static Func<object, object> GetOrCreateMapper(Type sourceType, Type destinationType)
         {
-            if (_mappersDictionaries.TryGetValue(destinationType, out var targetTypeMappers))
+            if (MappersDictionaries.TryGetValue(destinationType, out var targetTypeMappers))
             {
                 if (targetTypeMappers.TryGetValue(sourceType, out var mapper))
                 {
@@ -82,15 +64,15 @@ namespace DumbledoreMapper
                 }
 
                 mapper = CreateMapper(sourceType, destinationType);
-                targetTypeMappers.Add(sourceType, mapper);
+                targetTypeMappers.GetOrAdd(sourceType, mapper);
                 return mapper;
             }
             else
             {
-                targetTypeMappers = new Dictionary<Type, Func<object, object>>();
+                targetTypeMappers = new ConcurrentDictionary<Type, Func<object, object>>();
                 var mapper = CreateMapper(sourceType, destinationType);
-                targetTypeMappers.Add(sourceType, mapper);
-                _mappersDictionaries.Add(destinationType, targetTypeMappers);
+                targetTypeMappers.GetOrAdd(sourceType, mapper);
+                MappersDictionaries.GetOrAdd(destinationType, targetTypeMappers);
                 return mapper;
             }
         }
@@ -118,17 +100,17 @@ namespace DumbledoreMapper
             return mapperExpr.Compile();
         }
 
-        private static Dictionary<string, PropertyInfo> GetProperties(Type objType)
+        private static ConcurrentDictionary<string, PropertyInfo> GetProperties(Type objType)
         {
-            if (!_propertiesDictionaries.TryGetValue(objType, out var propertiesInfoDictionary))
+            if (!PropertiesDictionaries.TryGetValue(objType, out var propertiesInfoDictionary))
             {
                 var infos = objType.GetProperties();
-                propertiesInfoDictionary = new Dictionary<string, PropertyInfo>();
+                propertiesInfoDictionary = new ConcurrentDictionary<string, PropertyInfo>();
                 foreach (var propertyInfo in infos)
                 {
-                    propertiesInfoDictionary.Add(propertyInfo.Name, propertyInfo);
+                    propertiesInfoDictionary.GetOrAdd(propertyInfo.Name, propertyInfo);
                 }
-                _propertiesDictionaries.Add(objType, propertiesInfoDictionary);
+                PropertiesDictionaries.GetOrAdd(objType, propertiesInfoDictionary);
             }
             return propertiesInfoDictionary;
         }

@@ -2,6 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Dmitry Protko (mirypoko@gmail.com)</Authors>
+    <Company>Dmitry Protko (mirypoko@gmail.com)</Company>
+    <Product>DumbledoreMapper</Product>
+    <Description>How to use:
+var viewModel = Mapper.Map&lt;ViewModel&gt;(model);
+var model = Mapper.Map&lt;Model&gt;(viewModel);
+var resultList = Mapper.Map&lt;List&lt;Model&gt;&gt;(viewModelCollection);</Description>
+    <PackageProjectUrl>https://github.com/mirypoko/DumbledoreMapper</PackageProjectUrl>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageTags>Mapper</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseUrl>https://github.com/mirypoko/DumbledoreMapper/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
 </Project>
