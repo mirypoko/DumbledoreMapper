@@ -8,5 +8,5 @@ A very simple static mapper
   
 `var model = Mapper.Map<Model>(viewModel);`
 
-`var resultList = Mapper.Map<List<Model>>(viewModelCollection);`
+`var resultList = Mapper.Map<Model>(viewModelCollection);`
 
