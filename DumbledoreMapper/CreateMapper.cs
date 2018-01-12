@@ -9,11 +9,8 @@ using System.Reflection;
 
 namespace DumbledoreMapper
 {
-    public static class Mapper
+    public static partial class Mapper
     {
-        private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertiesDictionaries
-            = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
-
         private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, Func<object, object>>> MappersDictionaries = new
             ConcurrentDictionary<Type, ConcurrentDictionary<Type, Func<object, object>>>();
 
@@ -63,24 +60,24 @@ namespace DumbledoreMapper
                     return mapper;
                 }
 
-                mapper = CreateMapper(sourceType, destinationType);
+                mapper = CreateCopyMapper(sourceType, destinationType);
                 targetTypeMappers.GetOrAdd(sourceType, mapper);
                 return mapper;
             }
             else
             {
                 targetTypeMappers = new ConcurrentDictionary<Type, Func<object, object>>();
-                var mapper = CreateMapper(sourceType, destinationType);
+                var mapper = CreateCopyMapper(sourceType, destinationType);
                 targetTypeMappers.GetOrAdd(sourceType, mapper);
                 MappersDictionaries.GetOrAdd(destinationType, targetTypeMappers);
                 return mapper;
             }
         }
 
-        private static Func<object, object> CreateMapper(Type sourceType, Type destinationType)
+        private static Func<object, object> CreateCopyMapper(Type sourceType, Type targetType)
         {
-            var sourceProperties = GetProperties(sourceType);
-            var targetPropertyes = GetProperties(destinationType);
+            var sourceProperties = GetVisibleProperties(sourceType);
+            var targetPropertyes = GetVisibleProperties(targetType);
 
             var paramExpr = Expression.Parameter(typeof(object));
             var sourceExpr = Expression.Convert(paramExpr, sourceType);
@@ -95,24 +92,11 @@ namespace DumbledoreMapper
                         Expression.Property(sourceExpr, sourceProperty)));
                 }
             }
-            var resultExpr = Expression.MemberInit(Expression.New(destinationType), bindings);
+            var resultExpr = Expression.MemberInit(Expression.New(targetType), bindings);
             var mapperExpr = Expression.Lambda<Func<object, object>>(resultExpr, paramExpr);
             return mapperExpr.Compile();
         }
 
-        private static ConcurrentDictionary<string, PropertyInfo> GetProperties(Type objType)
-        {
-            if (!PropertiesDictionaries.TryGetValue(objType, out var propertiesInfoDictionary))
-            {
-                var infos = objType.GetProperties();
-                propertiesInfoDictionary = new ConcurrentDictionary<string, PropertyInfo>();
-                foreach (var propertyInfo in infos)
-                {
-                    propertiesInfoDictionary.GetOrAdd(propertyInfo.Name, propertyInfo);
-                }
-                PropertiesDictionaries.GetOrAdd(objType, propertiesInfoDictionary);
-            }
-            return propertiesInfoDictionary;
-        }
+
     }
 }
