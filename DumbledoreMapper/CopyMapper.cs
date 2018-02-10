@@ -12,6 +12,10 @@ namespace DumbledoreMapper
         private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, Object>> CopyMappersDictionaries = new
             ConcurrentDictionary<Type, ConcurrentDictionary<Type, Object>>();
 
+        /// <typeparam name="TSource">Source type.</typeparam>
+        /// <typeparam name="TTarget">Target target.</typeparam>
+        /// <param name="source">The source whose fields will be copy to the target object.</param>
+        /// <param name="target">The object into which the fields will be copied.</param>
         public static void CopyProperties<TSource, TTarget>(TSource source, TTarget target)
         {
             GetOrCreateMapper<TSource, TTarget>().Invoke(source, target);
@@ -43,7 +47,7 @@ namespace DumbledoreMapper
             }
         }
 
-        public static Action<TSource, TTarget> CreateCopyMapper<TSource, TTarget>(Type sourceType, Type targetType)
+        private static Action<TSource, TTarget> CreateCopyMapper<TSource, TTarget>(Type sourceType, Type targetType)
         {
             var sourceProperties = GetVisibleProperties(sourceType);
             var targetProperties = GetVisibleProperties(targetType);

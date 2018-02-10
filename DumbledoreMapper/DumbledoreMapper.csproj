@@ -8,12 +8,15 @@
     <Description>How to use:
 var viewModel = Mapper.Map&lt;ViewModel&gt;(model);
 var model = Mapper.Map&lt;Model&gt;(viewModel);
-var resultList = Mapper.Map&lt;List&lt;Model&gt;&gt;(viewModelCollection);</Description>
+var resultList = Mapper.Map&lt;List&lt;Model&gt;&gt;(viewModelCollection);
+Mapper.CopyProperties(source, target);</Description>
     <PackageProjectUrl>https://github.com/mirypoko/DumbledoreMapper</PackageProjectUrl>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>Mapper</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseUrl>https://github.com/mirypoko/DumbledoreMapper/blob/master/LICENSE</PackageLicenseUrl>
+    <Version>1.2.0</Version>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
 </Project>

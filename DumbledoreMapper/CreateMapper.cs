@@ -34,8 +34,6 @@ namespace DumbledoreMapper
             return resultList;
         }
 
-        ///// <summary>
-        ///// </summary>
         /// <param name="source">The source whose fields will be copied to the new object</param>
         /// <returns>A new object of type T</returns>
         public static T Map<T>(object source) where T : class
