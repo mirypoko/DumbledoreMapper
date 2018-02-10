@@ -4,7 +4,7 @@ A very simple static mapper
 
 ## Install
 
-`Install-Package DumbledoreMapper -Version 1.0.0`
+`Install-Package DumbledoreMapper -Version 1.2.0`
 
 ## How to use
 
@@ -13,4 +13,6 @@ A very simple static mapper
 `var model = Mapper.Map<Model>(viewModel);`
 
 `var resultList = Mapper.Map<Model>(viewModelCollection);`
+
+`Mapper.CopyProperties(source, target);`
 
