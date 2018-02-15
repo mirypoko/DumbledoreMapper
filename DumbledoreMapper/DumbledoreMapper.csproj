@@ -5,11 +5,7 @@
     <Authors>Dmitry Protko (mirypoko@gmail.com)</Authors>
     <Company>Dmitry Protko (mirypoko@gmail.com)</Company>
     <Product>DumbledoreMapperStandard</Product>
-    <Description>How to use:
-var viewModel = Mapper.Map&lt;ViewModel&gt;(model);
-var model = Mapper.Map&lt;Model&gt;(viewModel);
-var resultList = Mapper.Map&lt;Model&gt;(viewModelCollection);
-Mapper.CopyProperties(source, target);</Description>
+    <Description>A very simple static mapper.</Description>
     <PackageProjectUrl>https://github.com/mirypoko/DumbledoreMapper</PackageProjectUrl>
     <PackageReleaseNotes>Now fields of different types will not be copied. If the object has fields with different types but the same name, a warning will be displayed.</PackageReleaseNotes>
     <PackageTags>Mapper</PackageTags>
