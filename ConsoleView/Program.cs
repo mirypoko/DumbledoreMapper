@@ -38,6 +38,8 @@ namespace ConsoleView
 
             double сopyMap = TestCopyMapper();
             Console.WriteLine($"TestCopyMapper:{сopyMap}ms");
+
+            Console.ReadKey();
         }
 
         private static double TestCopyMapper()

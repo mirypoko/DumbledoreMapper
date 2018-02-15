@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -51,6 +53,18 @@ namespace DumbledoreMapper
         {
             var sourceProperties = GetVisibleProperties(sourceType);
             var targetProperties = GetVisibleProperties(targetType);
+
+            foreach (var targetProperty in targetProperties)
+            {
+                if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
+                {
+                    if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                    {
+                        Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                        sourceProperties.Remove(targetProperty.Key);
+                    }
+                }
+            }
 
             var fromVar = Expression.Variable(sourceType, "from");
             var toVar = Expression.Variable(targetType, "to");

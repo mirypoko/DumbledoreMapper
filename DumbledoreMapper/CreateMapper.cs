@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -75,17 +76,22 @@ namespace DumbledoreMapper
         private static Func<object, object> CreateCopyMapper(Type sourceType, Type targetType)
         {
             var sourceProperties = GetVisibleProperties(sourceType);
-            var targetPropertyes = GetVisibleProperties(targetType);
+            var targetProperties = GetVisibleProperties(targetType);
 
             var paramExpr = Expression.Parameter(typeof(object));
             var sourceExpr = Expression.Convert(paramExpr, sourceType);
 
             var bindings = new List<MemberBinding>();
 
-            foreach (var targetProperty in targetPropertyes)
+            foreach (var targetProperty in targetProperties)
             {
                 if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
                 {
+                    if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                    {
+                        Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                        continue;
+                    }
                     bindings.Add(Expression.Bind(targetProperty.Value,
                         Expression.Property(sourceExpr, sourceProperty)));
                 }

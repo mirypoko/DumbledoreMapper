@@ -11,13 +11,15 @@ var model = Mapper.Map&lt;Model&gt;(viewModel);
 var resultList = Mapper.Map&lt;List&lt;Model&gt;&gt;(viewModelCollection);
 Mapper.CopyProperties(source, target);</Description>
     <PackageProjectUrl>https://github.com/mirypoko/DumbledoreMapper</PackageProjectUrl>
-    <PackageReleaseNotes>Added function for copying fields</PackageReleaseNotes>
+    <PackageReleaseNotes>Now fields of different types will not be copied. If the object has fields with different types but the same name, a warning will be displayed.</PackageReleaseNotes>
     <PackageTags>Mapper</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseUrl>https://github.com/mirypoko/DumbledoreMapper/blob/master/LICENSE</PackageLicenseUrl>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageId>DumbledoreMapperStandard</PackageId>
+    <RepositoryUrl>https://github.com/mirypoko/DumbledoreMapper</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
 
 </Project>
