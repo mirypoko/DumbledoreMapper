@@ -12,6 +12,12 @@ namespace ConsoleView
 
         public string CardNumber { get; set; }
 
+        public int? ForNullableInt { get; set; }
+
+        public bool ForNullableBool { get; set; }
+
+        public int ForIgnore { get; set; }
+
         public void SetData()
         {
             Id = RandomUtil.GetRandomNumber(1, 10000);

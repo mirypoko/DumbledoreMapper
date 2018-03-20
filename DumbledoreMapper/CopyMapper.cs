@@ -17,20 +17,69 @@ namespace DumbledoreMapper
         private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertiesDictionaries
             = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
 
+        /// <summary>
+        /// Copy public properties from source to target.
+        /// </summary>
         /// <typeparam name="TSource">Source type.</typeparam>
         /// <typeparam name="TTarget">Target target.</typeparam>
         /// <param name="source">The source whose fields will be copy to the target object.</param>
         /// <param name="target">The object into which the fields will be copied.</param>
-        public static void CopyProperties<TSource, TTarget>(TSource source, TTarget target)
+        public static void CopyProperties<TSource, TTarget>(TSource source, TTarget target, bool mapNullabelTypes = false)
         {
-            GetOrCreateMapper<TSource, TTarget>().Invoke(source, target);
+            if (mapNullabelTypes)
+            {
+                var sourceType = source.GetType();
+                var targetType = target.GetType();
+                var sourceProperties = GetOrAddVisiblePropertiesToDictionary(sourceType);
+                var targetPropertyes = GetOrAddVisiblePropertiesToDictionary(targetType);
+
+                foreach (var targetProperty in targetPropertyes)
+                {
+                    if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
+                    {
+                        if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                        {
+                            if (targetProperty.Value.PropertyType.IsClass ||
+                                targetProperty.Value.PropertyType.IsGenericType &&
+                                targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                                || (sourceProperty.PropertyType.IsClass ||
+                                    sourceProperty.PropertyType.IsGenericType &&
+                                    sourceProperty.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                            {
+                                try
+                                {
+                                    targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                                    continue;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                                }
+                            }
+
+                            Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                            continue;
+                        }
+
+                        targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                    }
+                }
+            }
+            else
+            {
+                GetOrCreateMapper<TSource, TTarget>().Invoke(source, target);
+            }
         }
 
-        /// <typeparam name="TSource">Source type.</typeparam>
-        /// <typeparam name="TTarget">Target target.</typeparam>
+
+        /// <summary>
+        /// Copy public properties from source to target. Ignore null values.
+        /// </summary>
         /// <param name="source">The source whose fields will be copy to the target object.</param>
         /// <param name="target">The object into which the fields will be copied.</param>
-        public static void CopyPropertiesIfNotNull(object source, object target)
+        /// <param name="mapNullabelTypes">Set true for the ability to copy different types (for example int? to int). 
+        /// The parameter is unsafe to use.</param>
+        public static void CopyPropertiesIfNotNull(object source, object target, bool mapNullabelTypes = false)
         {
             var sourceType = source.GetType();
             var targetType = target.GetType();
@@ -41,6 +90,30 @@ namespace DumbledoreMapper
             {
                 if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
                 {
+                    if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                    {
+                        if (mapNullabelTypes && targetProperty.Value.PropertyType.IsClass ||
+                            targetProperty.Value.PropertyType.IsGenericType &&
+                            targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                            || (sourceProperty.PropertyType.IsClass ||
+                                sourceProperty.PropertyType.IsGenericType &&
+                                sourceProperty.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                        {
+                            try
+                            {
+                                targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                                continue;
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                            }
+                        }
+
+                        Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                        continue;
+                    }
+
                     if (targetProperty.Value.PropertyType.IsClass || targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
                         var value = sourceProperty.GetValue(source);
@@ -49,43 +122,35 @@ namespace DumbledoreMapper
                             continue;
                         }
                     }
+
                     targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
                 }
             }
         }
 
-        /// <typeparam name="TSource">Source type.</typeparam>
-        /// <typeparam name="TTarget">Target target.</typeparam>
-        /// <param name="source">The source whose fields will be copy to the target object.</param>
-        /// <param name="target">The object into which the fields will be copied.</param>
-        /// <param name="ignoreTypeConflicts">Set true for the ability to copy different types (for example int? to int). 
-        /// The parameter is unsafe to use.</param>
-        public static void CopyPropertiesIfNotNull(object source, object target, bool ignoreTypeConflicts = false)
+        private static Action<TSource, TTarget> GetOrCreateMapperWithIgnore<TSource, TTarget>()
         {
-            var sourceType = source.GetType();
-            var targetType = target.GetType();
-            var sourceProperties = GetOrAddVisiblePropertiesToDictionary(sourceType);
-            var targetPropertyes = GetOrAddVisiblePropertiesToDictionary(targetType);
+            var sourceType = typeof(TSource);
+            var targetType = typeof(TTarget);
 
-            foreach (var targetProperty in targetPropertyes)
+            if (CopyMappersWithIgnoreDictionaries.TryGetValue(targetType, out var targetTypeMappers))
             {
-                if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
+                if (targetTypeMappers.TryGetValue(sourceType, out var mapper))
                 {
-                    if (!ignoreTypeConflicts && targetProperty.Value.PropertyType != sourceProperty.PropertyType)
-                    {
-                        Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
-                        continue;
-                    }
-                    if (targetProperty.Value.PropertyType.IsClass || targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    {
-                        var value = sourceProperty.GetValue(source);
-                        if (value == null)
-                        {
-                            continue;
-                        }
-                    }
-                    targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                    return (Action<TSource, TTarget>)mapper;
                 }
+
+                mapper = CreateCopyMapperWithIgnore<TSource, TTarget>(sourceType, targetType);
+                targetTypeMappers.GetOrAdd(sourceType, mapper);
+                return (Action<TSource, TTarget>)mapper;
+            }
+            else
+            {
+                targetTypeMappers = new ConcurrentDictionary<Type, Object>();
+                var mapper = CreateCopyMapperWithIgnore<TSource, TTarget>(sourceType, targetType);
+                targetTypeMappers.GetOrAdd(sourceType, mapper);
+                CopyMappersWithIgnoreDictionaries.GetOrAdd(targetType, targetTypeMappers);
+                return mapper;
             }
         }
 
@@ -126,6 +191,7 @@ namespace DumbledoreMapper
                 {
                     if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
                     {
+                        var val1 = targetProperty.Value.PropertyType == typeof(int);
                         Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
                         sourceProperties.Remove(targetProperty.Key);
                     }
@@ -190,5 +256,7 @@ namespace DumbledoreMapper
             }
             return propertiesInfoDictionary;
         }
+
+        private bool IsNullableAnd
     }
 }

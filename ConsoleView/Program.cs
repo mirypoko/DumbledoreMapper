@@ -7,181 +7,206 @@ namespace ConsoleView
 {
     class Program
     {
-        private static int _countOfRecords;
-
-        private static List<User> _users;
-
-        private static readonly List<Client> _clients = new List<Client>();
-
         static void Main(string[] args)
         {
-            Console.Write("Сount of records:");
-            _countOfRecords = Convert.ToInt32(Console.ReadLine());
-
-            _users = new List<User>();
-            for (int i = 0; i < _countOfRecords; i++)
-            {
-                var user = new User();
-                user.SetData();
-                _users.Add(user);
-
-                Client client = new Client();
-                client.SetData();
-                _clients.Add(client);
-            }
-
-            double Map = TestCreateMapper();
-            Console.WriteLine($"TestCreateMapper:{Map}ms");
-
-            double сopyMap = TestCopyMapper();
-            Console.WriteLine($"TestCopyMapper:{сopyMap}ms");
-
-            double copyIfNotNullMapper = TestCopyIfNotNullMapperSpeed();
-            Console.WriteLine($"TestCopyIfNotNullMapper speed::{copyIfNotNullMapper}ms");
-
-            //Console.WriteLine();
-            //Console.WriteLine("TestCopyIfNotNullMapper:");
-            //TestCopyIfNotNullMapper();
-
-            TestCopyIfNotNullMapperWithIgnore();
+            TestCreateMapper();
+            //TestCreateMapperWithIgnore();
+            TestCopyMapper();
+            //TestCopyMapperWithIgnore();
+            TestCopyMapperIfNotNull();
+            //TestCopyMapperIfNotNullWithIgnore();
 
             Console.ReadKey();
         }
 
-        private static double TestCopyMapper()
+        private static void TestCreateMapper()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            for (int i = 0; i < _countOfRecords; i++)
+            var user = new User
             {
-                var c = new Client();
-                Mapper.CopyProperties(_users[i], c);
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = "Dmitry",
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var clientFromUser = Mapper.Map<Client>(user);
+            if (clientFromUser.Name == user.Name &&
+                clientFromUser.Email == user.Email &&
+                clientFromUser.ForIgnore == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Create mapper work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Create mapper error.");
             }
 
-            stopWatch.Stop();
-            var ts = stopWatch.Elapsed;
-            return ts.TotalMilliseconds;
+            Console.ResetColor();
         }
 
-        private static double TestCreateMapper()
+        private static void TestCreateMapperWithIgnore()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            for (int i = 0; i < _countOfRecords; i++)
+            var user = new User
             {
-                Mapper.Map<Client>(_users[i]);
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = "Dmitry",
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var clientFromUser = Mapper.Map<Client>(user, true);
+            if (clientFromUser.Name == user.Name &&
+                clientFromUser.Email == user.Email &&
+                clientFromUser.ForIgnore == user.ForIgnore)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Create mapper with ignore work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Create mapper with ignore error.");
             }
 
-            stopWatch.Stop();
-            var ts = stopWatch.Elapsed;
-            return ts.TotalMilliseconds;
+            Console.ResetColor();
         }
 
-        private static void TestCopyIfNotNullMapper()
+        private static void TestCopyMapper()
         {
-            for (int i = 0; i < _countOfRecords / 2; i++)
+            var user = new User
             {
-                var c = new Client();
-                c.Email = "clientemail@grfdgdfg.com";
-                _users[i].Email = null;
-                Mapper.CopyPropertiesIfNotNull(_users[i], c);
-                Console.WriteLine($"CopyIfNotNullMapper test {i} (dont copy):");
-                Console.WriteLine(_users[i]);
-                Console.WriteLine(c);
-                Console.WriteLine();
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = "Dmitry",
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var client = new Client()
+            {
+                Email = "clientemail@dsfsdg.com",
+                Name = "Andrey",
+                ForIgnore = 321
+            };
 
-            }
-            for (int i = _countOfRecords / 2; i < _countOfRecords; i++)
-            {
-                var c = new Client();
-                Mapper.CopyProperties(_users[i], c);
-                Console.WriteLine($"CopyIfNotNullMapper test {i} (copy):");
-                Console.WriteLine(_users[i]);
-                Console.WriteLine(c);
-                Console.WriteLine();
-            }
-        }
+            Mapper.CopyProperties(user, client);
 
-
-        private static double TestCopyIfNotNullMapperSpeed()
-        {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            for (int i = 0; i < _countOfRecords / 2; i++)
+            if (client.Name == user.Name &&
+                client.Email == user.Email &&
+                client.Id == user.Id &&
+                client.ForIgnore == 321)
             {
-                var c = new Client();
-                c.Email = "clientemail@grfdgdfg.com";
-                _users[i].Email = null;
-                Mapper.CopyPropertiesIfNotNull(_users[i], c);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Copy mapper work good.");
             }
-
-            stopWatch.Stop();
-            var ts = stopWatch.Elapsed;
-            return ts.TotalMilliseconds;
-        }
-
-        private static void TestCopyIfNotNullMapperWithIgnore()
-        {
-            var list1 = new List<Obj1>();
-            var list2 = new List<Obj2>();
-            for (int i = 0; i < _countOfRecords; i++)
+            else
             {
-                list1.Add(new Obj1());
-                list2.Add(new Obj2());
-            }
-            for (int i = 0; i < _countOfRecords; i++)
-            {
-                Mapper.CopyPropertiesIfNotNull(list1[i], list2[i], true);
-                Console.WriteLine($"CopyIfNotNullMapper test {i} (WithIgnore):");
-                Console.WriteLine(list1[i]);
-                Console.WriteLine(list2[i]);
-                Console.WriteLine();
-            }
-            list1 = new List<Obj1>();
-            list2 = new List<Obj2>();
-            for (int i = 0; i < _countOfRecords; i++)
-            {
-                list1.Add(new Obj1());
-                list2.Add(new Obj2());
-            }
-            for (int i = 0; i < _countOfRecords; i++)
-            {
-                Mapper.CopyPropertiesIfNotNull(list2[i], list1[i], true);
-                Console.WriteLine($"CopyIfNotNullMapper test {i} (WithIgnore):");
-                Console.WriteLine(list2[i]);
-                Console.WriteLine(list1[i]);
-                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Copy mapper error.");
             }
         }
 
-        private static double TestCopyMapper()
+        private static void TestCopyMapperWithIgnore()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            for (int i = 0; i < _countOfRecords; i++)
+            var user = new User
             {
-                var c = new Client();
-                Mapper.CopyProperties(_users[i], c);
-            }
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = "Dmitry",
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var client = new Client()
+            {
+                Email = "clientemail@dsfsdg.com",
+                Name = "Andrey",
+                ForIgnore = 321
+            };
 
-            stopWatch.Stop();
-            var ts = stopWatch.Elapsed;
-            return ts.TotalMilliseconds;
+            Mapper.CopyProperties(user, client, true);
+
+            if (client.Name == user.Name &&
+                client.Email == user.Email &&
+                client.Id == user.Id &&
+                client.ForIgnore == 321)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Copy mapper with ignore work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Copy mapper with ignore error.");
+            }
         }
 
-        private static double TestCreateMapper()
+        private static void TestCopyMapperIfNotNull()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            for (int i = 0; i < _countOfRecords; i++)
+            var user = new User
             {
-                Mapper.Map<Client>(_users[i]);
-            }
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = "Dmitry",
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var client = new Client()
+            {
+                Email = "clientemail@dsfsdg.com",
+                Name = "Andrey",
+                ForIgnore = 321
+            };
 
-            stopWatch.Stop();
-            var ts = stopWatch.Elapsed;
-            return ts.TotalMilliseconds;
+            Mapper.CopyProperties(user, client, true);
+
+            if (client.Name == user.Name &&
+                client.Email == user.Email &&
+                client.Id == user.Id &&
+                client.ForIgnore == user.ForIgnore)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Copy mapper (if not null) with ignore work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Copy mapper (if not null) with ignore error.");
+            }
+        }
+
+        private static void TestCopyMapperIfNotNullWithIgnore()
+        {
+            var user = new User
+            {
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = null,
+                Role = "Admin",
+                ForIgnore = 123
+            };
+            var client = new Client()
+            {
+                Email = "clientemail@dsfsdg.com",
+                Name = "Andrey",
+                ForIgnore = 321
+            };
+
+            Mapper.CopyProperties(user, client, true);
+
+            if (client.Name == "Andrey" &&
+                client.Email == user.Email &&
+                client.Id == user.Id &&
+                client.ForIgnore == 321)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Copy mapper (if not null) with ignore work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Copy mapper (if not null) with ignore error.");
+            }
         }
     }
 }

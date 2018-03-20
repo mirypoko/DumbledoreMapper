@@ -12,6 +12,12 @@
 
         public string Role { get; set; }
 
+        public bool? ForNullableBool { get; set; }
+
+        public int ForNullableInt { get; set; }
+
+        public long ForIgnore { get; set; }
+
         public void SetData()
         {
             Id = RandomUtil.GetRandomNumber(1, 10000);
