@@ -14,6 +14,9 @@ namespace DumbledoreMapper
         private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, Object>> CopyMappersDictionaries = new
             ConcurrentDictionary<Type, ConcurrentDictionary<Type, Object>>();
 
+        private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertiesDictionaries
+            = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
+
         /// <typeparam name="TSource">Source type.</typeparam>
         /// <typeparam name="TTarget">Target target.</typeparam>
         /// <param name="source">The source whose fields will be copy to the target object.</param>
@@ -21,6 +24,69 @@ namespace DumbledoreMapper
         public static void CopyProperties<TSource, TTarget>(TSource source, TTarget target)
         {
             GetOrCreateMapper<TSource, TTarget>().Invoke(source, target);
+        }
+
+        /// <typeparam name="TSource">Source type.</typeparam>
+        /// <typeparam name="TTarget">Target target.</typeparam>
+        /// <param name="source">The source whose fields will be copy to the target object.</param>
+        /// <param name="target">The object into which the fields will be copied.</param>
+        public static void CopyPropertiesIfNotNull(object source, object target)
+        {
+            var sourceType = source.GetType();
+            var targetType = target.GetType();
+            var sourceProperties = GetOrAddVisiblePropertiesToDictionary(sourceType);
+            var targetPropertyes = GetOrAddVisiblePropertiesToDictionary(targetType);
+
+            foreach (var targetProperty in targetPropertyes)
+            {
+                if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
+                {
+                    if (targetProperty.Value.PropertyType.IsClass || targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var value = sourceProperty.GetValue(source);
+                        if (value == null)
+                        {
+                            continue;
+                        }
+                    }
+                    targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                }
+            }
+        }
+
+        /// <typeparam name="TSource">Source type.</typeparam>
+        /// <typeparam name="TTarget">Target target.</typeparam>
+        /// <param name="source">The source whose fields will be copy to the target object.</param>
+        /// <param name="target">The object into which the fields will be copied.</param>
+        /// <param name="ignoreTypeConflicts">Set true for the ability to copy different types (for example int? to int). 
+        /// The parameter is unsafe to use.</param>
+        public static void CopyPropertiesIfNotNull(object source, object target, bool ignoreTypeConflicts = false)
+        {
+            var sourceType = source.GetType();
+            var targetType = target.GetType();
+            var sourceProperties = GetOrAddVisiblePropertiesToDictionary(sourceType);
+            var targetPropertyes = GetOrAddVisiblePropertiesToDictionary(targetType);
+
+            foreach (var targetProperty in targetPropertyes)
+            {
+                if (sourceProperties.TryGetValue(targetProperty.Key, out var sourceProperty))
+                {
+                    if (!ignoreTypeConflicts && targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                    {
+                        Trace.TraceWarning($"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
+                        continue;
+                    }
+                    if (targetProperty.Value.PropertyType.IsClass || targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var value = sourceProperty.GetValue(source);
+                        if (value == null)
+                        {
+                            continue;
+                        }
+                    }
+                    targetProperty.Value.SetValue(target, sourceProperty.GetValue(source));
+                }
+            }
         }
 
         private static Action<TSource, TTarget> GetOrCreateMapper<TSource, TTarget>()
@@ -112,6 +178,17 @@ namespace DumbledoreMapper
                 }
             }
             return result;
+        }
+
+        private static ConcurrentDictionary<string, PropertyInfo> GetOrAddVisiblePropertiesToDictionary(Type type)
+        {
+            if (!PropertiesDictionaries.TryGetValue(type, out var propertiesInfoDictionary))
+            {
+                var props = GetVisibleProperties(type);
+                propertiesInfoDictionary = new ConcurrentDictionary<string, PropertyInfo>(props);
+                PropertiesDictionaries.GetOrAdd(type, propertiesInfoDictionary);
+            }
+            return propertiesInfoDictionary;
         }
     }
 }
