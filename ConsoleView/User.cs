@@ -12,9 +12,7 @@
 
         public string Role { get; set; }
 
-        public bool? ForNullableBool { get; set; }
-
-        public int ForNullableInt { get; set; }
+        public int NullableInt { get; set; }
 
         public long ForIgnore { get; set; }
 

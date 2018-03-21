@@ -10,11 +10,9 @@ namespace ConsoleView
         static void Main(string[] args)
         {
             TestCreateMapper();
-            //TestCreateMapperWithIgnore();
             TestCopyMapper();
-            //TestCopyMapperWithIgnore();
             TestCopyMapperIfNotNull();
-            //TestCopyMapperIfNotNullWithIgnore();
+            TestCopyMapperIfNotNullAndNotCopyNullable();
 
             Console.ReadKey();
         }
@@ -29,10 +27,13 @@ namespace ConsoleView
                 Role = "Admin",
                 ForIgnore = 123
             };
+
             var clientFromUser = Mapper.Map<Client>(user);
+
             if (clientFromUser.Name == user.Name &&
                 clientFromUser.Email == user.Email &&
-                clientFromUser.ForIgnore == 0)
+                clientFromUser.ForIgnore == 0 &&
+                clientFromUser.Id == user.Id)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Create mapper work good.");
@@ -46,33 +47,6 @@ namespace ConsoleView
             Console.ResetColor();
         }
 
-        private static void TestCreateMapperWithIgnore()
-        {
-            var user = new User
-            {
-                Id = 1,
-                Email = "useremail@dfgkj.com",
-                Name = "Dmitry",
-                Role = "Admin",
-                ForIgnore = 123
-            };
-            var clientFromUser = Mapper.Map<Client>(user, true);
-            if (clientFromUser.Name == user.Name &&
-                clientFromUser.Email == user.Email &&
-                clientFromUser.ForIgnore == user.ForIgnore)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Create mapper with ignore work good.");
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Create mapper with ignore error.");
-            }
-
-            Console.ResetColor();
-        }
-
         private static void TestCopyMapper()
         {
             var user = new User
@@ -81,21 +55,24 @@ namespace ConsoleView
                 Email = "useremail@dfgkj.com",
                 Name = "Dmitry",
                 Role = "Admin",
-                ForIgnore = 123
+                ForIgnore = 123,
+                NullableInt = 1234
             };
             var client = new Client()
             {
                 Email = "clientemail@dsfsdg.com",
                 Name = "Andrey",
-                ForIgnore = 321
+                ForIgnore = 321,
+                NullableInt = null
             };
 
-            Mapper.CopyProperties(user, client);
+            Mapper.CopyProperties(user, client, true, true);
 
             if (client.Name == user.Name &&
                 client.Email == user.Email &&
                 client.Id == user.Id &&
-                client.ForIgnore == 321)
+                client.ForIgnore == 321 &&
+                client.NullableInt.Value == user.NullableInt)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Copy mapper work good.");
@@ -107,75 +84,7 @@ namespace ConsoleView
             }
         }
 
-        private static void TestCopyMapperWithIgnore()
-        {
-            var user = new User
-            {
-                Id = 1,
-                Email = "useremail@dfgkj.com",
-                Name = "Dmitry",
-                Role = "Admin",
-                ForIgnore = 123
-            };
-            var client = new Client()
-            {
-                Email = "clientemail@dsfsdg.com",
-                Name = "Andrey",
-                ForIgnore = 321
-            };
-
-            Mapper.CopyProperties(user, client, true);
-
-            if (client.Name == user.Name &&
-                client.Email == user.Email &&
-                client.Id == user.Id &&
-                client.ForIgnore == 321)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Copy mapper with ignore work good.");
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Copy mapper with ignore error.");
-            }
-        }
-
         private static void TestCopyMapperIfNotNull()
-        {
-            var user = new User
-            {
-                Id = 1,
-                Email = "useremail@dfgkj.com",
-                Name = "Dmitry",
-                Role = "Admin",
-                ForIgnore = 123
-            };
-            var client = new Client()
-            {
-                Email = "clientemail@dsfsdg.com",
-                Name = "Andrey",
-                ForIgnore = 321
-            };
-
-            Mapper.CopyProperties(user, client, true);
-
-            if (client.Name == user.Name &&
-                client.Email == user.Email &&
-                client.Id == user.Id &&
-                client.ForIgnore == user.ForIgnore)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Copy mapper (if not null) with ignore work good.");
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Copy mapper (if not null) with ignore error.");
-            }
-        }
-
-        private static void TestCopyMapperIfNotNullWithIgnore()
         {
             var user = new User
             {
@@ -183,29 +92,69 @@ namespace ConsoleView
                 Email = "useremail@dfgkj.com",
                 Name = null,
                 Role = "Admin",
-                ForIgnore = 123
+                ForIgnore = 123,
+                NullableInt = 1234
             };
             var client = new Client()
             {
                 Email = "clientemail@dsfsdg.com",
                 Name = "Andrey",
-                ForIgnore = 321
+                ForIgnore = 321,
+                NullableInt = null
             };
 
-            Mapper.CopyProperties(user, client, true);
+            Mapper.CopyProperties(user, client, false, true);
 
             if (client.Name == "Andrey" &&
                 client.Email == user.Email &&
                 client.Id == user.Id &&
-                client.ForIgnore == 321)
+                client.ForIgnore == 321 &&
+                client.NullableInt.Value == user.NullableInt)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Copy mapper (if not null) with ignore work good.");
+                Console.WriteLine("Copy mapper (if not null) work good.");
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Copy mapper (if not null) with ignore error.");
+                Console.WriteLine("Copy mapper (if not null) error.");
+            }
+        }
+
+        private static void TestCopyMapperIfNotNullAndNotCopyNullable()
+        {
+            var user = new User
+            {
+                Id = 1,
+                Email = "useremail@dfgkj.com",
+                Name = null,
+                Role = "Admin",
+                ForIgnore = 123,
+                NullableInt = 1234
+            };
+            var client = new Client()
+            {
+                Email = "clientemail@dsfsdg.com",
+                Name = "Andrey",
+                ForIgnore = 321,
+                NullableInt = null
+            };
+
+            Mapper.CopyProperties(user, client, false, false);
+
+            if (client.Name == "Andrey" &&
+                client.Email == user.Email &&
+                client.Id == user.Id &&
+                client.ForIgnore == 321 &&
+                client.NullableInt == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Copy mapper (if not null and dont copy nullable) work good.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Copy mapper (if not null and dont copy nullable) error.");
             }
         }
     }

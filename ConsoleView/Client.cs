@@ -12,9 +12,7 @@ namespace ConsoleView
 
         public string CardNumber { get; set; }
 
-        public int? ForNullableInt { get; set; }
-
-        public bool ForNullableBool { get; set; }
+        public int? NullableInt { get; set; }
 
         public int ForIgnore { get; set; }
 
