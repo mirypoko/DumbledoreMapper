@@ -1,10 +1,17 @@
-﻿namespace ConsoleView
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace ConsoleView
 {
     public class User
     {
         private readonly string[] _roles = {"Admin", "User", "Moderator"};
 
         public int Id { get; set; }
+
+        public Guid UserId { get; set; }
+
+        public Guid? ManagerId { get; set; }
 
         public string Name { get; set; }
 

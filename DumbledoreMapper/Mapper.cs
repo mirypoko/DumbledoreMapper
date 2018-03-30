@@ -245,34 +245,39 @@ namespace DumbledoreMapper
                 {
                     if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
                     {
-                        if (sourceProperty.PropertyType.IsGenericType && sourceProperty.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) ||
-                            targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        if (!targetProperty.Value.PropertyType.IsClass && !sourceProperty.PropertyType.IsClass)
                         {
-                            if (!(sourceProperty.PropertyType.GenericTypeArguments.Any() &&
-                                sourceProperty.PropertyType.GenericTypeArguments.Contains(targetProperty.Value.PropertyType)))
+                            if (sourceProperty.PropertyType.IsGenericType && sourceProperty.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) ||
+                                targetProperty.Value.PropertyType.IsGenericType && targetProperty.Value.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                             {
-                                if (!(targetProperty.Value.PropertyType.GenericTypeArguments.Any() &&
-                                      targetProperty.Value.PropertyType.GenericTypeArguments.Contains(sourceProperty.PropertyType)))
+                                if (!(sourceProperty.PropertyType.GenericTypeArguments.Any() &&
+                                      sourceProperty.PropertyType.GenericTypeArguments.Contains(targetProperty.Value.PropertyType)))
                                 {
-                                    bindings.Add(Expression.Bind(targetProperty.Value,
-                                        Expression.Property(sourceExpr, sourceProperty)));
-                                    continue;
+                                    if (!(targetProperty.Value.PropertyType.GenericTypeArguments.Any() &&
+                                          targetProperty.Value.PropertyType.GenericTypeArguments.Contains(sourceProperty.PropertyType)))
+                                    {
+                                        var b = Expression.Bind(targetProperty.Value,
+                                            Expression.Property(sourceExpr, sourceProperty));
+                                        bindings.Add(b);
+                                        continue;
+                                    }
                                 }
                             }
-                        }                   
-                    }
-
-                    if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
-                    {
+                        }
                         Trace.TraceWarning(
                             $"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
                         continue;
                     }
-
                     bindings.Add(Expression.Bind(targetProperty.Value,
                         Expression.Property(sourceExpr, sourceProperty)));
                 }
             }
+
+            if (bindings.Count < 1)
+            {
+                throw new Exception("No fields for mapping");
+            }
+
             var resultExpr = Expression.MemberInit(Expression.New(targetType), bindings);
             var mapperExpr = Expression.Lambda<Func<object, object>>(resultExpr, paramExpr);
             return mapperExpr.Compile();

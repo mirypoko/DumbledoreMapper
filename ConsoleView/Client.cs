@@ -1,10 +1,16 @@
-﻿using System.Text;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace ConsoleView
 {
     public class Client
     {
         public int Id { get; set; }
+
+        public Guid UserId { get; set; }
+
+        public Guid? ManagerId { get; set; }
 
         public string Name { get; set; }
 

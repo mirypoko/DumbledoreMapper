@@ -16,12 +16,12 @@ Mapper.CopyProperties(source, target);</Description>
     <PackageTags>Mapper, DumbledoreMapper</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseUrl>https://github.com/mirypoko/DumbledoreMapper/blob/master/LICENSE</PackageLicenseUrl>
-    <Version>1.3.1</Version>
+    <Version>1.3.2</Version>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageId>DumbledoreMapperStandard</PackageId>
     <RepositoryUrl>https://github.com/mirypoko/DumbledoreMapper</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <AssemblyVersion>1.3.1.0</AssemblyVersion>
+    <AssemblyVersion>1.3.2.0</AssemblyVersion>
   </PropertyGroup>
 
 </Project>
