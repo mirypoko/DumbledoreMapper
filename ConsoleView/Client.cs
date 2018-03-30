@@ -12,6 +12,8 @@ namespace ConsoleView
 
         public string CardNumber { get; set; }
 
+        public string ErrorType { get; set; }
+
         public int? NullableInt { get; set; }
 
         public int ForIgnore { get; set; }

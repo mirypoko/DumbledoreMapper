@@ -259,8 +259,11 @@ namespace DumbledoreMapper
                                     continue;
                                 }
                             }
-                        }
+                        }                   
+                    }
 
+                    if (targetProperty.Value.PropertyType != sourceProperty.PropertyType)
+                    {
                         Trace.TraceWarning(
                             $"Fields with the name {sourceProperty.Name} have different types and will not be copied.");
                         continue;

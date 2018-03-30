@@ -12,6 +12,8 @@
 
         public string Role { get; set; }
 
+        public double ErrorType { get; set; }
+
         public int NullableInt { get; set; }
 
         public long ForIgnore { get; set; }
