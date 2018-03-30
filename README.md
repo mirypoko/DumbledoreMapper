@@ -4,7 +4,7 @@ A very simple static mapper
 
 ## Install
 
-`Install-Package DumbledoreMapperStandard -Version 1.2.1`
+`Install-Package DumbledoreMapperStandard -Version 1.3.0`
 
 ## How to use
 
